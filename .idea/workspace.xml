@@ -4,9 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="16ce646d-8964-4570-a8e7-674db24f0a40" name="Changes" comment="workarounds, new gitignore and req">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-    </list>
+    <list default="true" id="16ce646d-8964-4570-a8e7-674db24f0a40" name="Changes" comment="update regex" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -41,6 +39,7 @@
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
     "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "Python.main.executor": "Run",
     "Python.workaroundYandex.executor": "Run",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.git.unshallow": "true",
@@ -67,7 +66,7 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1753475674095</updated>
-      <workItem from="1753475675288" duration="4888000" />
+      <workItem from="1753475675288" duration="5368000" />
     </task>
     <task id="LOCAL-00001" summary="added AGENTS.md">
       <option name="closed" value="true" />
@@ -93,7 +92,15 @@
       <option name="project" value="LOCAL" />
       <updated>1753479356750</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="update regex">
+      <option name="closed" value="true" />
+      <created>1753481760471</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1753481760471</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -103,9 +110,11 @@
     <MESSAGE value="added AGENTS.md" />
     <MESSAGE value="added idea files" />
     <MESSAGE value="workarounds, new gitignore and req" />
-    <option name="LAST_COMMIT_MESSAGE" value="workarounds, new gitignore and req" />
+    <MESSAGE value="update regex" />
+    <option name="LAST_COMMIT_MESSAGE" value="update regex" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
+    <SUITE FILE_PATH="coverage/inlineMusicBot$main.coverage" NAME="main Coverage Results" MODIFIED="1753481606506" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/inlineMusicBot$workaroundYandex.coverage" NAME="workaroundYandex Coverage Results" MODIFIED="1753477218897" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>

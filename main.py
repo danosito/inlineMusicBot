@@ -231,6 +231,9 @@ async def on_download(cb: CallbackQuery):
     if not token:
         await cb.answer("Требуется токен")
         return
+    print(track_id)
+    print(cb.data)
+    print(cb.message)
 
     await cb.message.edit_text("скачиваю:3")
     path = os.path.join("/tmp", f"{track_id}_{cb.from_user.id}.mp3")
