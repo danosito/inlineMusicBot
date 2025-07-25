@@ -22,7 +22,7 @@ from aiogram.types import (
     InlineQuery,
     InlineQueryResultArticle,
     InputTextMessageContent,
-    Message,
+    Message, FSInputFile, InputMediaAudio,
 )
 from dotenv import load_dotenv
 from yandex_music import Client
@@ -229,25 +229,44 @@ async def on_download(cb: CallbackQuery):
     track_id = cb.data.split(":", 1)[1]
     token = await fetch_token(cb.from_user.id)
     if not token:
-        await cb.answer("Требуется токен")
-        return
-    logging.info(track_id)
-    logging.info(cb.data)
-    logging.info(cb.message)
+        return await cb.answer("Нужен токен")
 
-    await cb.message.edit_text("скачиваю:3")
-    path = os.path.join("/tmp", f"{track_id}_{cb.from_user.id}.mp3")
-    info = await download_track(token, track_id, path)
-    try:
-        await cb.message.delete()
-        await cb.message.answer_audio(
-            audio=open(path, "rb"),
-            title=info["title"],
-            performer=info["artists"],
+    # 1. Показать «Скачиваю…»
+    if cb.message:          # кнопка под обычным сообщением
+        await cb.message.edit_text("Скачиваю…")
+        target = dict(chat_id=cb.message.chat.id,
+                      message_id=cb.message.message_id)
+    else:                   # кнопка в inline‑сообщении
+        await cb.bot.edit_message_text(
+            inline_message_id=cb.inline_message_id,
+            text="Скачиваю…"
         )
-    finally:
-        if os.path.exists(path):
-            os.remove(path)
+        target = dict(inline_message_id=cb.inline_message_id)
+
+    # 2. Скачиваем трек
+    path = f"/tmp/{track_id}_{cb.from_user.id}.mp3"
+    info = await download_track(token, track_id, path)
+
+    # 3. Отправляем аудио пользователю, чтобы получить file_id
+    sent = await cb.bot.send_audio(
+        cb.from_user.id,
+        audio=FSInputFile(path),
+        title=info["title"],
+        performer=info["artists"],
+    )
+    file_id = sent.audio.file_id
+
+    # 4. Заменяем медиа сообщения на полученное аудио
+    await cb.bot.edit_message_media(
+        media=InputMediaAudio(
+            media=file_id,
+            title=info["title"],
+            performer=info["artists"]
+        ),
+        **target
+    )
+    await cb.answer()
+    os.remove(path)
 
 
 async def main():
