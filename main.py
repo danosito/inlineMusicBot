@@ -89,8 +89,8 @@ async def cache_set(track_id: str, info: dict):
 
 # ─── Yandex helpers ────────────────────────────────────────────────────────────
 
-TRACK_ID_RE = re.compile(r"(?:track|trackId=)(\d+)")
-TOKEN_RE = re.compile(r"^y0_[0-9A-Za-z]+$")
+TRACK_ID_RE = re.compile(r"(?:/track/)(\d+)")
+TOKEN_RE = re.compile(r"^y0[-_0-9A-Za-z]+$")
 
 
 def _download_track(token: str, track_id: str, dest: str) -> str:
