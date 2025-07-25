@@ -188,7 +188,14 @@ def parse_track_id(text: str) -> Optional[str]:
 async def inline_download(query: InlineQuery):
     track_id = parse_track_id(query.query.strip())
     if not track_id:
-        await query.answer([], cache_time=1)
+        await query.answer([
+            InlineQueryResultArticle(
+                id="not_track",
+                title="Это не похоже на трек",
+                description="Отправьте действительную ссылку на трек в поддерживаемом сервисе",
+                input_message_content=InputTextMessageContent(message_text="ссылка не ведет на трек"),
+            )
+        ], cache_time=1)
         return
 
     token = await fetch_token(query.from_user.id)
@@ -249,7 +256,7 @@ async def on_download(cb: CallbackQuery):
 
     # 3. Отправляем аудио пользователю, чтобы получить file_id
     sent = await cb.bot.send_audio(
-        cb.from_user.id,
+        1210881411,
         audio=FSInputFile(path),
         title=info["title"],
         performer=info["artists"],
