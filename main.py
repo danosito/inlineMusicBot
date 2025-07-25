@@ -87,6 +87,14 @@ async def cache_set(track_id: str, info: dict):
     await redis_client.setex(f"track:{track_id}", 24 * 3600, json.dumps(info))
 
 
+async def cache_file_get(track_id: str) -> Optional[str]:
+    return await redis_client.get(f"file:{track_id}")
+
+
+async def cache_file_set(track_id: str, file_id: str):
+    await redis_client.set(f"file:{track_id}", file_id)
+
+
 # ─── Yandex helpers ────────────────────────────────────────────────────────────
 
 TRACK_ID_RE = re.compile(r"(?:/track/)(\d+)")
@@ -238,6 +246,31 @@ async def on_download(cb: CallbackQuery):
     if not token:
         return await cb.answer("Нужен токен")
 
+    file_id = await cache_file_get(track_id)
+    if file_id:
+        info = await get_track_info(token, track_id)
+        if cb.message:
+            await cb.message.edit_text("Отправляю…")
+            target = dict(chat_id=cb.message.chat.id,
+                          message_id=cb.message.message_id)
+        else:
+            await cb.bot.edit_message_text(
+                inline_message_id=cb.inline_message_id,
+                text="Отправляю…",
+            )
+            target = dict(inline_message_id=cb.inline_message_id)
+
+        await cb.bot.edit_message_media(
+            media=InputMediaAudio(
+                media=file_id,
+                title=info["title"],
+                performer=info["artists"],
+            ),
+            **target
+        )
+        await cb.answer()
+        return
+
     # 1. Показать «Скачиваю…»
     if cb.message:          # кнопка под обычным сообщением
         await cb.message.edit_text("Скачиваю…")
@@ -272,6 +305,7 @@ async def on_download(cb: CallbackQuery):
         ),
         **target
     )
+    await cache_file_set(track_id, file_id)
     await cb.answer()
     os.remove(path)
 
