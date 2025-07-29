@@ -11,7 +11,6 @@ from aiogram.types import (
     InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery,
     FSInputFile, InputMediaAudio
 )
-from tests.conftest import album_without_tracks
 from yandex_music import Client
 
 from storage import fetch_token, cache_get, cache_set, cache_file_get, cache_file_set
