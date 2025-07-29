@@ -1,0 +1,69 @@
+import os
+import json
+from contextlib import asynccontextmanager
+from typing import Optional
+
+import aiosqlite
+import redis.asyncio as aioredis
+
+DB_DIR = os.getenv("DB_DIR", "/app/db")
+os.makedirs(DB_DIR, exist_ok=True)
+DB_PATH = os.path.join(DB_DIR, "tokens.db")
+
+redis_client: aioredis.Redis | None = None
+
+def set_redis_client(client: aioredis.Redis):
+    global redis_client
+    redis_client = client
+
+@asynccontextmanager
+async def with_db():
+    async with aiosqlite.connect(DB_PATH) as db:
+        await db.executescript(
+            """
+            CREATE TABLE IF NOT EXISTS tokens (
+                user_id INTEGER PRIMARY KEY,
+                token TEXT
+            );
+            """
+        )
+        await db.commit()
+        yield db
+
+async def save_token(user_id: int, token: str):
+    async with with_db() as db:
+        await db.execute(
+            "INSERT OR REPLACE INTO tokens (user_id, token) VALUES (?, ?)",
+            (user_id, token),
+        )
+        await db.commit()
+
+async def fetch_token(user_id: int) -> Optional[str]:
+    async with with_db() as db:
+        async with db.execute(
+            "SELECT token FROM tokens WHERE user_id = ?",
+            (user_id,),
+        ) as cur:
+            row = await cur.fetchone()
+            return row[0] if row else None
+
+async def cache_get(track_id: str) -> Optional[dict]:
+    if redis_client is None:
+        return None
+    data = await redis_client.get(f"track:{track_id}")
+    return json.loads(data) if data else None
+
+async def cache_set(track_id: str, info: dict):
+    if redis_client is None:
+        return
+    await redis_client.setex(f"track:{track_id}", 24 * 3600, json.dumps(info))
+
+async def cache_file_get(track_id: str) -> Optional[str]:
+    if redis_client is None:
+        return None
+    return await redis_client.get(f"file:{track_id}")
+
+async def cache_file_set(track_id: str, file_id: str):
+    if redis_client is None:
+        return
+    await redis_client.set(f"file:{track_id}", file_id)
