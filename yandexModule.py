@@ -59,9 +59,10 @@ async def search_tracks(query: str, token: str) -> List[InlineQueryResultArticle
     client = Client(token)
     client.init()
     res = client.search(query)
-    if "results" not in res["tracks"]:
+    try:
+        tracks = res["tracks"]["results"][:10]
+    except TypeError:
         return []
-    tracks = res["tracks"]["results"][:10]
     items: List[InlineQueryResultArticle] = []
     for tr in tracks:
         track_id = str(tr["id"])
