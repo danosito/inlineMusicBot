@@ -59,6 +59,8 @@ async def search_tracks(query: str, token: str) -> List[InlineQueryResultArticle
     client = Client(token)
     client.init()
     res = client.search(query)
+    if not "results" in res["tracks"]:
+        return []
     tracks = res["tracks"]["results"][:10]
     items: List[InlineQueryResultArticle] = []
     for tr in tracks:
