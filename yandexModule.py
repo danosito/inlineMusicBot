@@ -55,8 +55,9 @@ async def get_track_info(token: str, track_id: str) -> dict:
     await cache_set(track_id, info)
     return info
 
-async def search_tracks(query: str) -> List[InlineQueryResultArticle]:
-    client = Client()
+async def search_tracks(query: str, userid: int) -> List[InlineQueryResultArticle]:
+    token = await fetch_token(userid)
+    client = Client(token)
     client.init()
     res = client.search(query)
     tracks = res["tracks"]["results"][:10]

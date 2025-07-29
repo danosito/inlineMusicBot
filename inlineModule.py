@@ -54,7 +54,7 @@ async def handle_inline(query: InlineQuery):
             ], cache_time=1)
     else:
         if text.startswith("ym "):
-            results = await ym.search_tracks(text[3:])
+            results = await ym.search_tracks(text[3:], query.from_user.id)
             if results:
                 await query.answer(results, cache_time=1)
             else:
