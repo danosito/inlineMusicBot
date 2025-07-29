@@ -11,6 +11,7 @@ from aiogram.types import (
     InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery,
     FSInputFile, InputMediaAudio
 )
+from tests.conftest import album_without_tracks
 from yandex_music import Client
 
 from storage import fetch_token, cache_get, cache_set, cache_file_get, cache_file_set
@@ -55,8 +56,7 @@ async def get_track_info(token: str, track_id: str) -> dict:
     await cache_set(track_id, info)
     return info
 
-async def search_tracks(query: str, userid: int) -> List[InlineQueryResultArticle]:
-    token = await fetch_token(userid)
+async def search_tracks(query: str, token: str) -> List[InlineQueryResultArticle]:
     client = Client(token)
     client.init()
     res = client.search(query)
@@ -114,6 +114,24 @@ async def answer_download(query: InlineQuery, track_id: str):
             ]]),
         )
     ], cache_time=1)
+
+async def answer_search(query: InlineQuery, search_query_text: str):
+    token = await fetch_token(query.from_user.id)
+    bot_username = (await query.bot.me()).username
+    if not token:
+        text = f"Чтобы скачать трек, откройте @{bot_username} и отправьте /token"
+        await query.answer([
+            InlineQueryResultArticle(
+                id="need_token",
+                title="Добавьте токен",
+                description="Нет токена для скачивания",
+                input_message_content=InputTextMessageContent(message_text=text),
+            )
+        ], cache_time=1)
+        return "No token"
+    return await search_tracks(search_query_text, token)
+
+
 
 async def on_download(cb: CallbackQuery):
     track_id = cb.data.split(":", 1)[1]

@@ -5,6 +5,7 @@ from aiogram.types import (
 import yandexModule as ym
 import youtubeModule as yt
 import spotifyModule as sf
+from yandexModule import answer_search
 
 router = Router()
 
@@ -54,8 +55,10 @@ async def handle_inline(query: InlineQuery):
             ], cache_time=1)
     else:
         if text.startswith("ym "):
-            results = await ym.search_tracks(text[3:], query.from_user.id)
-            if results:
+            results = await answer_search(query, text[3:])
+            if results == "No token":
+                pass
+            elif results:
                 await query.answer(results, cache_time=1)
             else:
                 await query.answer([
