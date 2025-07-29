@@ -68,11 +68,11 @@ async def handle_inline(query: InlineQuery):
             pref = await get_pref_service(query.from_user.id)
             match pref:
                 case "ym":
-                    await answer_search_ym(query, text[3:])
+                    await answer_search_ym(query, text)
                 case "yt":
-                    await answer_search_yt(query, text[3:])
+                    await answer_search_yt(query, text)
                 case "sf":
-                    await answer_search_sf(query, text[3:])
+                    await answer_search_sf(query, text)
                 case None:
                     await query.answer([
                         InlineQueryResultArticle(
