@@ -56,9 +56,8 @@ async def set_pref(msg: Message, state: FSMContext):
 
 @router.callback_query(F.data.contains("pref"))
 async def handle_ym(call: CallbackQuery):
-    await call.answer(f"call: {call.data}")
     await save_pref_service(call.from_user.id, call.data.split("_")[1])
-    await call.answer(f"saved service: {get_pref_service(call.from_user.id)}")
+    await call.answer(f"saved service: {await get_pref_service(call.from_user.id)}")
 
 @router.message(TokenState.waiting_token)
 async def save_user_token(msg: Message, state: FSMContext):
