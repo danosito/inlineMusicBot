@@ -65,30 +65,29 @@ async def handle_inline(query: InlineQuery):
         elif text.startswith("sf "):
             await answer_search_sf(query, text[3:])
         else:
-            pref = get_pref_service(query.from_user.id)
-            if pref:
-                match pref:
-                    case "ym":
-                        await answer_search_ym(query, text[3:])
-                    case "yt":
-                        await answer_search_yt(query, text[3:])
-                    case "sf":
-                        await answer_search_sf(query, text[3:])
-                    case _:
-                        await query.answer([
-                            InlineQueryResultArticle(
-                                id="unknown",
-                                title="Выбран неправильный сервис в предпочтительном",
-                                description="Попробуйте /help в нашем боте",
-                                input_message_content=InputTextMessageContent(message_text="не понимаю запрос"),
-                            )
-                        ], cache_time=1)
-            else:
-                await query.answer([
-                    InlineQueryResultArticle(
-                        id="unknown",
-                        title="Непонятный запрос",
-                        description="Попробуйте /help в нашем боте",
-                        input_message_content=InputTextMessageContent(message_text="не понимаю запрос"),
-                    )
-                ], cache_time=1)
+            pref = await get_pref_service(query.from_user.id)
+            match pref:
+                case "ym":
+                    await answer_search_ym(query, text[3:])
+                case "yt":
+                    await answer_search_yt(query, text[3:])
+                case "sf":
+                    await answer_search_sf(query, text[3:])
+                case None:
+                    await query.answer([
+                        InlineQueryResultArticle(
+                            id="unknown",
+                            title="Непонятный запрос",
+                            description="Попробуйте /help в нашем боте",
+                            input_message_content=InputTextMessageContent(message_text="не понимаю запрос"),
+                        )
+                    ], cache_time=1)
+                case _:
+                    await query.answer([
+                        InlineQueryResultArticle(
+                            id="unknown",
+                            title="Выбран неправильный сервис в предпочтительном",
+                            description="Попробуйте /help в нашем боте",
+                            input_message_content=InputTextMessageContent(message_text="не понимаю запрос"),
+                        )
+                    ], cache_time=1)
