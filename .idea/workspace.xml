@@ -4,7 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="16ce646d-8964-4570-a8e7-674db24f0a40" name="Changes" comment="all mp3 to danosito, more mp3 to god of mp3&#10;also error message:3" />
+    <list default="true" id="16ce646d-8964-4570-a8e7-674db24f0a40" name="Changes" comment="remove example branch mentions">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/workaroundYandex.py" beforeDir="false" afterPath="$PROJECT_DIR$/workaroundYandex.py" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -31,6 +34,7 @@
 }</component>
   <component name="ProjectId" id="30NkyZuMrh2ZlQwT9iuSIjv2lBI" />
   <component name="ProjectLevelVcsManager">
+    <OptionsSetting value="false" id="Update" />
     <ConfirmationsSetting value="2" id="Add" />
   </component>
   <component name="ProjectViewState">
@@ -68,6 +72,7 @@
       <option name="presentableId" value="Default" />
       <updated>1753475674095</updated>
       <workItem from="1753475675288" duration="5368000" />
+      <workItem from="1753794645707" duration="1529000" />
     </task>
     <task id="LOCAL-00001" summary="added AGENTS.md">
       <option name="closed" value="true" />
@@ -117,7 +122,15 @@
       <option name="project" value="LOCAL" />
       <updated>1753484726964</updated>
     </task>
-    <option name="localTasksCounter" value="7" />
+    <task id="LOCAL-00007" summary="remove example branch mentions">
+      <option name="closed" value="true" />
+      <created>1753485476819</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1753485476819</updated>
+    </task>
+    <option name="localTasksCounter" value="8" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -141,10 +154,11 @@
     <MESSAGE value="update regex" />
     <MESSAGE value="test new way of uploading audio" />
     <MESSAGE value="all mp3 to danosito, more mp3 to god of mp3&#10;also error message:3" />
-    <option name="LAST_COMMIT_MESSAGE" value="all mp3 to danosito, more mp3 to god of mp3&#10;also error message:3" />
+    <MESSAGE value="remove example branch mentions" />
+    <option name="LAST_COMMIT_MESSAGE" value="remove example branch mentions" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/inlineMusicBot$main.coverage" NAME="main Coverage Results" MODIFIED="1753484368389" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/inlineMusicBot$workaroundYandex.coverage" NAME="workaroundYandex Coverage Results" MODIFIED="1753477218897" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/inlineMusicBot$workaroundYandex.coverage" NAME="workaroundYandex Coverage Results" MODIFIED="1753796063304" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>
