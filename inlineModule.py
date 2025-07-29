@@ -5,9 +5,13 @@ from aiogram.types import (
 import yandexModule as ym
 import youtubeModule as yt
 import spotifyModule as sf
-from yandexModule import answer_search
+from storage import get_pref_service
+from yandexModule import answer_search as answer_search_ym
+from youtubeModule import answer_search as answer_search_yt
+from spotifyModule import answer_search as answer_search_sf
 
 router = Router()
+
 
 @router.inline_query()
 async def handle_inline(query: InlineQuery):
@@ -55,44 +59,36 @@ async def handle_inline(query: InlineQuery):
             ], cache_time=1)
     else:
         if text.startswith("ym "):
-            results = await answer_search(query, text[3:])
-            if results == "No token":
-                pass
-            elif results:
-                await query.answer(results, cache_time=1)
+            await answer_search_ym(query, text[3:])
+        elif text.startswith("yt "):
+            await answer_search_yt(query, text[3:])
+        elif text.startswith("sf "):
+            await answer_search_sf(query, text[3:])
+        else:
+            pref = get_pref_service(query.from_user.id)
+            if pref:
+                match pref:
+                    case "ym":
+                        await answer_search_ym(query, text[3:])
+                    case "yt":
+                        await answer_search_yt(query, text[3:])
+                    case "sf":
+                        await answer_search_sf(query, text[3:])
+                    case _:
+                        await query.answer([
+                            InlineQueryResultArticle(
+                                id="unknown",
+                                title="Выбран неправильный сервис в предпочтительном",
+                                description="Попробуйте /help в нашем боте",
+                                input_message_content=InputTextMessageContent(message_text="не понимаю запрос"),
+                            )
+                        ], cache_time=1)
             else:
                 await query.answer([
                     InlineQueryResultArticle(
-                        id="no_results",
-                        title="Ничего не найдено",
-                        description="Попробуйте другой запрос",
-                        input_message_content=InputTextMessageContent(message_text="ничего не найдено"),
+                        id="unknown",
+                        title="Непонятный запрос",
+                        description="Попробуйте /help в нашем боте",
+                        input_message_content=InputTextMessageContent(message_text="не понимаю запрос"),
                     )
                 ], cache_time=1)
-        elif text.startswith("yt "):
-            await query.answer([
-                InlineQueryResultArticle(
-                    id="yt_search",
-                    title="Функция в разработке",
-                    description="Поиск по YouTube будет позже",
-                    input_message_content=InputTextMessageContent(message_text="функция в разработке"),
-                )
-            ], cache_time=1)
-        elif text.startswith("sf "):
-            await query.answer([
-                InlineQueryResultArticle(
-                    id="sf_search",
-                    title="Функция в разработке",
-                    description="Поиск по Spotify будет позже",
-                    input_message_content=InputTextMessageContent(message_text="функция в разработке"),
-                )
-            ], cache_time=1)
-        else:
-            await query.answer([
-                InlineQueryResultArticle(
-                    id="unknown",
-                    title="Непонятный запрос",
-                    description="Попробуйте /help в нашем боте",
-                    input_message_content=InputTextMessageContent(message_text="не понимаю запрос"),
-                )
-            ], cache_time=1)

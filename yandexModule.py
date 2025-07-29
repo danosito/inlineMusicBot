@@ -13,7 +13,7 @@ from aiogram.types import (
 )
 from yandex_music import Client
 
-from storage import fetch_token, cache_get, cache_set, cache_file_get, cache_file_set
+from storage import fetch_ym_token, cache_get_ym_info, cache_set_ym_info, cache_file_get_ym, cache_file_set_ym
 
 router = Router()
 
@@ -46,13 +46,13 @@ async def download_track(token: str, track_id: str, dest: str) -> dict:
     return json.loads(info_json)
 
 async def get_track_info(token: str, track_id: str) -> dict:
-    cached = await cache_get(track_id)
+    cached = await cache_get_ym_info(track_id)
     if cached:
         return cached
     dest = os.path.join("/tmp", f"tmp_{track_id}.mp3")
     info = await download_track(token, track_id, dest)
     os.remove(dest)
-    await cache_set(track_id, info)
+    await cache_set_ym_info(track_id, info)
     return info
 
 async def search_tracks(query: str, token: str) -> List[InlineQueryResultArticle]:
@@ -90,7 +90,7 @@ async def search_tracks(query: str, token: str) -> List[InlineQueryResultArticle
     return items
 
 async def answer_download(query: InlineQuery, track_id: str):
-    token = await fetch_token(query.from_user.id)
+    token = await fetch_ym_token(query.from_user.id)
     bot_username = (await query.bot.me()).username
     if not token:
         text = f"Чтобы скачать трек, откройте @{bot_username} и отправьте /token"
@@ -118,7 +118,7 @@ async def answer_download(query: InlineQuery, track_id: str):
     ], cache_time=1)
 
 async def answer_search(query: InlineQuery, search_query_text: str):
-    token = await fetch_token(query.from_user.id)
+    token = await fetch_ym_token(query.from_user.id)
     bot_username = (await query.bot.me()).username
     if not token:
         text = f"Чтобы скачать трек, откройте @{bot_username} и отправьте /token"
@@ -130,18 +130,30 @@ async def answer_search(query: InlineQuery, search_query_text: str):
                 input_message_content=InputTextMessageContent(message_text=text),
             )
         ], cache_time=1)
-        return "No token"
-    return await search_tracks(search_query_text, token)
+        return
+    results = await search_tracks(search_query_text, token)
+
+    if results:
+        await query.answer(results, cache_time=1)
+    else:
+        await query.answer([
+            InlineQueryResultArticle(
+                id="no_results",
+                title="Ничего не найдено",
+                description="Попробуйте другой запрос",
+                input_message_content=InputTextMessageContent(message_text="ничего не найдено"),
+            )
+        ], cache_time=1)
 
 
 
 async def on_download(cb: CallbackQuery):
     track_id = cb.data.split(":", 1)[1]
-    token = await fetch_token(cb.from_user.id)
+    token = await fetch_ym_token(cb.from_user.id)
     if not token:
         return await cb.answer("Нужен токен")
 
-    file_id = await cache_file_get(track_id)
+    file_id = await cache_file_get_ym(track_id)
     if file_id:
         info = await get_track_info(token, track_id)
         if cb.message:
@@ -179,7 +191,7 @@ async def on_download(cb: CallbackQuery):
         media=InputMediaAudio(media=file_id, title=info["title"], performer=info["artists"]),
         **target
     )
-    await cache_file_set(track_id, file_id)
+    await cache_file_set_ym(track_id, file_id)
     await cb.answer()
     os.remove(path)
 
