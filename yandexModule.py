@@ -66,7 +66,7 @@ async def search_tracks(query: str, userid: int) -> List[InlineQueryResultArticl
         track_id = str(tr["id"])
         title = tr["title"]
         artists = ", ".join(a["name"] for a in tr["artists"])
-        cover = tr.get("cover_uri", "").replace("%%", "100x100")
+        cover = (tr["cover_uri"] if "cover_uri" in tr else "").replace("%%", "100x100")
         if cover:
             cover = "https://" + cover
         msg = f"{artists} — {title}"
