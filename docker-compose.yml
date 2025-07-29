@@ -9,7 +9,7 @@ services:
     depends_on:
       - redis
     volumes:
-      - ./data/bot-db.db:/app/db
+      - ./data:/app/db
 
   redis:
     image: redis:7-alpine

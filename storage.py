@@ -8,7 +8,7 @@ import redis.asyncio as aioredis
 
 DB_DIR = os.getenv("DB_DIR", "/app/db")
 os.makedirs(DB_DIR, exist_ok=True)
-DB_PATH = os.path.join(DB_DIR, "tokens.db")
+DB_PATH = os.path.join(DB_DIR, "users.db")
 
 redis_client: aioredis.Redis | None = None
 
@@ -34,7 +34,11 @@ async def with_db():
 async def save_ym_token(user_id: int, token: str):
     async with with_db() as db:
         await db.execute(
-            "INSERT OR REPLACE INTO users (user_id, ym_token) VALUES (?, ?)",
+            """
+            INSERT INTO users (user_id, ym_token)
+            VALUES (?, ?)
+            ON CONFLICT(user_id) DO UPDATE SET ym_token=excluded.ym_token
+            """,
             (user_id, token),
         )
         await db.commit()
@@ -48,10 +52,14 @@ async def fetch_ym_token(user_id: int) -> Optional[str]:
             row = await cur.fetchone()
             return row[0] if row else None
 
-async def save_pref_service(user_id:int, pref_service: str):
+async def save_pref_service(user_id: int, pref_service: str):
     async with with_db() as db:
         await db.execute(
-            "INSERT OR REPLACE INTO users (user_id, pref_service) VALUES (?, ?)",
+            """
+            INSERT INTO users (user_id, pref_service)
+            VALUES (?, ?)
+            ON CONFLICT(user_id) DO UPDATE SET pref_service=excluded.pref_service
+            """,
             (user_id, pref_service),
         )
         await db.commit()
