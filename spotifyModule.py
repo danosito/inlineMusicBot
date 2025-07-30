@@ -18,3 +18,13 @@ async def answer_search(query: InlineQuery, search_query_text: str):
             input_message_content=InputTextMessageContent(message_text="функция в разработке"),
         )
     ], cache_time=1)
+
+async def answer_download(query: InlineQuery, link: str):
+    await query.answer([
+        InlineQueryResultArticle(
+            id="sf_late",
+            title="Spotify не скоро",
+            description="Поддержка Spotify будет нескоро",
+            input_message_content=InputTextMessageContent(message_text="Spotify пока не поддерживается"),
+        )
+    ], cache_time=1)

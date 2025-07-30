@@ -41,9 +41,11 @@ def _download_track(token: str, track_id: str, dest: str) -> str:
     }
     return json.dumps(info)
 
+
 async def download_track(token: str, track_id: str, dest: str) -> dict:
     info_json = await asyncio.to_thread(_download_track, token, track_id, dest)
     return json.loads(info_json)
+
 
 async def get_track_info(token: str, track_id: str) -> dict:
     cached = await cache_get_ym_info(track_id)
@@ -54,6 +56,7 @@ async def get_track_info(token: str, track_id: str) -> dict:
     os.remove(dest)
     await cache_set_ym_info(track_id, info)
     return info
+
 
 async def search_tracks(query: str, token: str) -> List[InlineQueryResultArticle]:
     client = Client(token)
@@ -82,12 +85,13 @@ async def search_tracks(query: str, token: str) -> List[InlineQueryResultArticle
                 description="Нажмите кнопку для скачивания",
                 input_message_content=InputTextMessageContent(message_text=msg),
                 reply_markup=InlineKeyboardMarkup(inline_keyboard=[[
-                    InlineKeyboardButton(text="Скачать", callback_data=f"dl:{track_id}")
+                    InlineKeyboardButton(text="Скачать", callback_data=f"ym_dl:{track_id}")
                 ]]),
                 thumb_url=cover
             )
         )
     return items
+
 
 async def answer_download(query: InlineQuery, track_id: str):
     token = await fetch_ym_token(query.from_user.id)
@@ -112,10 +116,11 @@ async def answer_download(query: InlineQuery, track_id: str):
             description="Нажмите кнопку для скачивания",
             input_message_content=InputTextMessageContent(message_text=message_text),
             reply_markup=InlineKeyboardMarkup(inline_keyboard=[[
-                InlineKeyboardButton(text="Скачать", callback_data=f"dl:{track_id}")
+                InlineKeyboardButton(text="Скачать", callback_data=f"ym_dl:{track_id}")
             ]]),
         )
     ], cache_time=1)
+
 
 async def answer_search(query: InlineQuery, search_query_text: str):
     token = await fetch_ym_token(query.from_user.id)
@@ -144,7 +149,6 @@ async def answer_search(query: InlineQuery, search_query_text: str):
                 input_message_content=InputTextMessageContent(message_text="ничего не найдено"),
             )
         ], cache_time=1)
-
 
 
 async def on_download(cb: CallbackQuery):
@@ -195,4 +199,5 @@ async def on_download(cb: CallbackQuery):
     await cb.answer()
     os.remove(path)
 
-router.callback_query.register(on_download, F.data.startswith("dl:"))
+
+router.callback_query.register(on_download, F.data.startswith("ym_dl:"))

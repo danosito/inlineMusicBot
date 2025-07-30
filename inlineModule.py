@@ -31,23 +31,9 @@ async def handle_inline(query: InlineQuery):
                     )
                 ], cache_time=1)
         elif yt.is_youtube_link(text):
-            await query.answer([
-                InlineQueryResultArticle(
-                    id="yt_soon",
-                    title="YouTube скоро",
-                    description="Поддержка YouTube будет скоро",
-                    input_message_content=InputTextMessageContent(message_text="YouTube скоро"),
-                )
-            ], cache_time=1)
+            await yt.answer_download(query, text)
         elif sf.is_spotify_link(text):
-            await query.answer([
-                InlineQueryResultArticle(
-                    id="sf_late",
-                    title="Spotify не скоро",
-                    description="Поддержка Spotify будет нескоро",
-                    input_message_content=InputTextMessageContent(message_text="Spotify пока не поддерживается"),
-                )
-            ], cache_time=1)
+            await sf.answer_download(query, text)
         else:
             await query.answer([
                 InlineQueryResultArticle(

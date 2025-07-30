@@ -4,3 +4,4 @@ aiohttp>=3.9
 aiosqlite>=0.19
 redis>=5.0  # redis-py с поддержкой asyncio
 yandex-music>=2.0
+yt-dlp==2025.7.21
