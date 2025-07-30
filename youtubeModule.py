@@ -3,7 +3,7 @@ import uuid
 
 from aiogram import Router
 from aiogram.types import InlineQuery, InlineQueryResultArticle, InputTextMessageContent, InlineKeyboardMarkup, \
-    InlineKeyboardButton
+    InlineKeyboardButton, InlineQueryResultPhoto
 import json
 import urllib.request
 import urllib.parse
@@ -85,9 +85,12 @@ async def answer_download(query: InlineQuery, link: str):
     info = await short_info(link)
     message_text = f"{info['title']} — {info['author']}"
     await query.answer([
-        InlineQueryResultArticle(
+        InlineQueryResultPhoto(
             id=str(uuid.uuid4()),
+            photo_url=info["preview"],
+            thumb_url=info["preview"],
             title=message_text,
+            caption=message_text,
             description="Нажмите кнопку для скачивания",
             input_message_content=InputTextMessageContent(message_text=message_text),
             reply_markup=InlineKeyboardMarkup(inline_keyboard=[[
