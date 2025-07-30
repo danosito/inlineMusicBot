@@ -2,7 +2,8 @@ import datetime
 import json
 import os
 import re
-import urllib.request, urllib.parse
+import urllib.request
+import urllib.parse
 
 from urllib.parse import urlparse, parse_qs
 import yt_dlp
