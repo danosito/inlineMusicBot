@@ -50,6 +50,8 @@ async def handle_inline(query: InlineQuery):
             await answer_search_yt(query, text[3:])
         elif text.startswith("sf "):
             await answer_search_sf(query, text[3:])
+        elif text == "":
+            pass
         else:
             pref = await get_pref_service(query.from_user.id)
             match pref:

@@ -88,7 +88,7 @@ async def answer_download(query: InlineQuery, link: str):
         InlineQueryResultPhoto(
             id=str(uuid.uuid4()),
             photo_url=info["preview"],
-            thumb_url=info["preview"],
+            thumbnail_url=info["preview"],
             title=message_text,
             caption=message_text,
             description="Нажмите кнопку для скачивания",
