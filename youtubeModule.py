@@ -89,15 +89,22 @@ async def answer_download(query: InlineQuery, link: str):
             id=str(uuid.uuid4()),
             photo_url=info["preview"],
             thumbnail_url=info["preview"],
-            title=message_text,
             caption=message_text,
-            description="Нажмите кнопку для скачивания",
-            input_message_content=InputTextMessageContent(message_text=message_text),
-            reply_markup=InlineKeyboardMarkup(inline_keyboard=[[
-                                                                   InlineKeyboardButton(text="Скачать mp3",
-                                                                                        callback_data=f"yt_dl:{info['id']}:audio")
-                                                               ] + [InlineKeyboardButton(
-                text=f"Скачать mp4 {resolution}p", callback_data=f"yt_dl:{info['id']}:{resolution}") for resolution in
-                                                                    info["resolutions"]]]),
+            title=message_text,
+            reply_markup=InlineKeyboardMarkup(
+                inline_keyboard=[
+                    [
+                        InlineKeyboardButton(
+                            text="Скачать mp3",
+                            callback_data=f"yt_dl:{info['id']}:audio"
+                        )
+                    ] + [
+                        InlineKeyboardButton(
+                            text=f"Скачать mp4 {resolution}p",
+                            callback_data=f"yt_dl:{info['id']}:{resolution}"
+                        ) for resolution in info["resolutions"]
+                    ]
+                ]
+            )
         )
     ], cache_time=1)
