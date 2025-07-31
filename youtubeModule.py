@@ -179,17 +179,17 @@ async def answer_download(query: InlineQuery, link: str):
         ], cache_time=1)
         return
 
-    cookie_path = f"/app/cookies/{query.from_user.id}.txt"
-    if not os.path.exists(cookie_path):
-        await query.answer([
-            InlineQueryResultArticle(
-                id="need_cookie",
-                title="Нужны cookies",
-                description="Отправьте команду /cookie",
-                input_message_content=InputTextMessageContent(message_text="Отправьте команду /cookie"),
-            )
-        ], cache_time=1)
-        return
+    # cookie_path = f"/app/cookies/{query.from_user.id}.txt"
+    # if not os.path.exists(cookie_path):
+    #     await query.answer([
+    #         InlineQueryResultArticle(
+    #             id="need_cookie",
+    #             title="Нужны cookies",
+    #             description="Отправьте команду /cookie",
+    #             input_message_content=InputTextMessageContent(message_text="Отправьте команду /cookie"),
+    #         )
+    #     ], cache_time=1)
+    #     return
 
     info = await short_info(link)
     vidInfos[video_id] = info
