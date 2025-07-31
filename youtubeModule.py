@@ -1,9 +1,12 @@
+import datetime
+import os
 import re
 import uuid
 
-from aiogram import Router
+import yt_dlp
+from aiogram import Router, F
 from aiogram.types import InlineQuery, InlineQueryResultArticle, InputTextMessageContent, InlineKeyboardMarkup, \
-    InlineKeyboardButton, InlineQueryResultPhoto
+    InlineKeyboardButton, InlineQueryResultPhoto, CallbackQuery
 import json
 import urllib.request
 import urllib.parse
@@ -16,6 +19,24 @@ router = Router()
 
 YOUTUBE_PATTERNS = [re.compile(r"https://(?:www\.)?youtube\.com"), re.compile(r"https://youtu\.be")]
 
+class _StatusLogger:
+    """
+    Перехватывает сообщения yt-dlp и выводит изменения
+    красным цветом (ANSI 31m).
+    """
+
+    def __init__(self) -> None:
+        self._last = None
+        self._last_time = datetime.datetime(1970, 1, 1, 0, 0, 0)
+
+    def _print(self, msg: str) -> None:
+        now = datetime.datetime.now()
+        if msg != self._last and now - self._last_time > datetime.timedelta(milliseconds=500):
+            print(f"\033[31m{msg}\033[0m")
+            self._last = msg
+            self._last_time = now
+
+    debug = info = warning = error = _print
 
 def is_youtube_link(text: str) -> bool:
     return any(p.search(text) for p in YOUTUBE_PATTERNS)
@@ -58,6 +79,65 @@ async def short_info(url: str, *, timeout: float = 2.0) -> dict:
         "resolutions": [144, 240, 360, 480, 720, 1080],
         "id": extract_video_id(url),
     }
+
+async def download_video(url: str, fmt: str, cb: CallbackQuery) -> dict:
+    """
+    Скачивает ролик / аудиодорожку во временный каталог.
+
+    Параметры
+    ----------
+    url      – ссылка на ролик
+    fmt      – 'audio'  ▸ MP3 bestaudio
+               '<num>'  ▸ MP4 указанной высоты (1080, 720…)
+
+    Возврат
+    -------
+    {'type': 'audio'|'video', 'file': '/tmp/<id>.<ext>', 'id': <video_id>}
+    """
+    vid = extract_video_id(url)
+    if not vid:
+        raise ValueError("Не удалось извлечь video-id из URL")
+
+    target_dir = "/tmp"
+    os.makedirs(target_dir, exist_ok=True)
+    outtmpl = os.path.join(target_dir, f"{vid}.%(ext)s")
+
+    # ─── Формат, пост-процессоры, результ. расширение ───
+    if fmt == "audio":
+        dl_format = "bestaudio/best"
+        post = [{"key": "FFmpegExtractAudio",
+                 "preferredcodec": "mp3",
+                 "preferredquality": "192"}]
+        ext, mediatype = "mp3", "audio"
+    else:
+        target = re.sub(r"[^\d]", "", fmt) or "720"
+        dl_format = (
+            f"bestvideo[height<={target}][ext=mp4]+bestaudio[ext=m4a]/"
+            f"best[height<={target}][ext=mp4]/"
+            f"best[height<={target}]"
+        )
+        post, ext, mediatype = [], "mp4", "video"
+
+    logger = _StatusLogger()
+
+    ydl_opts = {
+        "format": dl_format,
+        "outtmpl": outtmpl,
+        "logger": logger,
+        "postprocessors": post,
+        # подавим лишний шелл-вывод FFmpeg
+        "postprocessor_args": ["-loglevel", "error"],
+        # ускоряем фильтром только нужных форматов
+        "merge_output_format": "mp4",
+        "quiet": True,
+        "nocheckcertificate": True,
+    }
+
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        ydl.download([url])
+
+    final_path = os.path.join(target_dir, f"{vid}.{ext}")
+    return {"type": mediatype, "file": final_path, "id": vid}
 
 
 async def answer_search(query: InlineQuery, search_query_text: str):
@@ -108,3 +188,17 @@ async def answer_download(query: InlineQuery, link: str):
             )
         )
     ], cache_time=1)
+
+
+async def on_download(cb: CallbackQuery):
+    _, video_id, format = cb.data.split(":")
+    if cb.message:
+        await cb.message.edit_text("Скачиваю UwU…")
+        target = dict(chat_id=cb.message.chat.id, message_id=cb.message.message_id)
+    else:
+        await cb.bot.edit_message_text(inline_message_id=cb.inline_message_id, text="Скачиваю UwU…")
+        target = dict(inline_message_id=cb.inline_message_id)
+    await download_video(video_id, format, cb)
+
+
+router.callback_query.register(on_download, F.data.startswith("ym_dl:"))
