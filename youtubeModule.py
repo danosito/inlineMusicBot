@@ -35,7 +35,8 @@ class _StatusLogger:
         now = datetime.datetime.now()
         if msg != self._last and now - self._last_time > datetime.timedelta(milliseconds=500):
             print(f"\033[31m{msg}\033[0m")
-            self._cb.message.edit_text(msg)
+            cb = self._cb
+            cb.bot.edit_message_text(inline_message_id=cb.inline_message_id, text=msg)
             self._last = msg
             self._last_time = now
 
