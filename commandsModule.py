@@ -94,7 +94,7 @@ async def save_cookie_file(msg: Message, state: FSMContext):
         return
     os.makedirs("/app/cookies", exist_ok=True)
     path = f"/app/cookies/{msg.from_user.id}.txt"
-    await msg.document.download(destination_file=path)
+    await msg.bot.download(msg.document.file_id, destination=path)
     await msg.reply("Cookies сохранены.")
     await state.clear()
 
