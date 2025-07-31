@@ -120,7 +120,7 @@ async def download_video(url: str, fmt: str, cb: CallbackQuery, vid: str) -> dic
         post, ext, mediatype = [], "mp4", "video"
 
     queue = asyncio.Queue()
-    logger = _StatusLogger(cb, queue)
+    logger = _StatusLogger(queue)
 
     async def consume_log_queue():
         while True:
