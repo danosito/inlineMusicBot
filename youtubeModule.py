@@ -92,19 +92,19 @@ async def answer_download(query: InlineQuery, link: str):
             caption=message_text,
             title=message_text,
             reply_markup=InlineKeyboardMarkup(
-                inline_keyboard=[
-                    [
-                        InlineKeyboardButton(
-                            text="Скачать mp3",
-                            callback_data=f"yt_dl:{info['id']}:audio"
-                        )
-                    ] + [
-                        InlineKeyboardButton(
-                            text=f"Скачать mp4 {resolution}p",
-                            callback_data=f"yt_dl:{info['id']}:{resolution}"
-                        ) for resolution in info["resolutions"]
-                    ]
+                inline_keyboard=
+                [
+                    [InlineKeyboardButton(
+                        text="Скачать mp3",
+                        callback_data=f"yt_dl:{info['id']}:audio"
+                    )]
+                ] + [
+                    [InlineKeyboardButton(
+                        text=f"Скачать mp4 {resolution}p",
+                        callback_data=f"yt_dl:{info['id']}:{resolution}"
+                    )] for resolution in info["resolutions"]
                 ]
+
             )
         )
     ], cache_time=1)
