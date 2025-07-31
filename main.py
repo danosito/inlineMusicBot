@@ -11,6 +11,8 @@ from storage import set_redis_client
 from commandsModule import router as commands_router
 from inlineModule import router as inline_router
 from yandexModule import router as yandex_router
+from youtubeModule import router as youtube_router
+from spotifyModule import router as spotify_router
 
 load_dotenv()
 BOT_TOKEN = os.getenv("BOT_TOKEN")
@@ -27,6 +29,8 @@ async def main():
     dp.include_router(commands_router)
     dp.include_router(inline_router)
     dp.include_router(yandex_router)
+    dp.include_router(spotify_router)
+    dp.include_router(youtube_router)
 
     await bot.set_my_commands([
         BotCommand(command="start", description="Начать"),
