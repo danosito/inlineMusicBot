@@ -10,6 +10,7 @@ services:
       - redis
     volumes:
       - ./data:/app/db
+      - ./cookies:/app/cookies
 
   redis:
     image: redis:7-alpine

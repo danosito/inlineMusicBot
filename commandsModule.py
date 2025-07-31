@@ -1,3 +1,4 @@
+import os
 import re
 from aiogram import Router, F
 from aiogram.filters import Command, CommandStart
@@ -12,6 +13,10 @@ router = Router()
 
 class TokenState(StatesGroup):
     waiting_token: State = State()
+
+
+class CookieState(StatesGroup):
+    waiting_file: State = State()
 
 @router.message(CommandStart())
 async def cmd_start(msg: Message):
@@ -36,6 +41,18 @@ async def cmd_token(msg: Message, state: FSMContext):
         "Отправьте полученный токен одним сообщением."
     )
     await state.set_state(TokenState.waiting_token)
+
+
+@router.message(Command("cookie"))
+async def cmd_cookie(msg: Message, state: FSMContext):
+    await msg.answer(
+        "Скачайте расширение для экспорта cookies.txt:\n"
+        "Firefox: https://addons.mozilla.org/en-US/firefox/addon/cookies-txt/\n"
+        "Chrome: https://chromewebstore.google.com/detail/get-cookiestxt-locally/cclelndahbckbenkjhflpdbgdldlbecc\n"
+        "Экспортируйте cookies для youtube.com и отправьте файл сюда.",
+        parse_mode=ParseMode.MARKDOWN,
+    )
+    await state.set_state(CookieState.waiting_file)
 
 def pref_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
@@ -68,6 +85,23 @@ async def save_user_token(msg: Message, state: FSMContext):
     await save_ym_token(msg.from_user.id, token)
     await msg.reply("Токен сохранён!")
     await state.clear()
+
+
+@router.message(CookieState.waiting_file, F.document)
+async def save_cookie_file(msg: Message, state: FSMContext):
+    if not msg.document.file_name.endswith(".txt"):
+        await msg.reply("Нужен файл cookies.txt.")
+        return
+    os.makedirs("/app/cookies", exist_ok=True)
+    path = f"/app/cookies/{msg.from_user.id}.txt"
+    await msg.document.download(destination_file=path)
+    await msg.reply("Cookies сохранены.")
+    await state.clear()
+
+
+@router.message(CookieState.waiting_file)
+async def request_cookie_file(msg: Message):
+    await msg.reply("Пожалуйста, отправьте файл cookies.txt.")
 
 @router.message(F.text.startswith("/"))
 async def unknown_command(msg: Message):
