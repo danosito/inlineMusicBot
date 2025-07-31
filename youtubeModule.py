@@ -134,6 +134,10 @@ async def download_video(url: str, fmt: str, cb: CallbackQuery, vid: str) -> dic
         "nocheckcertificate": True,
     }
 
+    cookie_path = f"/app/cookies/{cb.from_user.id}.txt"
+    if os.path.exists(cookie_path):
+        ydl_opts["cookiefile"] = cookie_path
+
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         ydl.download([url])
 
@@ -163,6 +167,20 @@ async def answer_download(query: InlineQuery, link: str):
                 input_message_content=InputTextMessageContent(message_text="Не смог извлечь видео, проверьте ссылку"),
             )
         ], cache_time=1)
+        return
+
+    cookie_path = f"/app/cookies/{query.from_user.id}.txt"
+    if not os.path.exists(cookie_path):
+        await query.answer([
+            InlineQueryResultArticle(
+                id="need_cookie",
+                title="Нужны cookies",
+                description="Отправьте команду /cookie",
+                input_message_content=InputTextMessageContent(message_text="Отправьте команду /cookie"),
+            )
+        ], cache_time=1)
+        return
+
     info = await short_info(link)
     vidInfos[video_id] = info
     message_text = f"{info['title']} — {info['author']}"
@@ -185,7 +203,7 @@ async def answer_download(query: InlineQuery, link: str):
                         text=f"Скачать mp4 {resolution}p",
                         callback_data=f"yt_dl:{info['id']}:{resolution}"
                     )] for resolution in info["resolutions"]
-                ]
+                ],
 
             )
         )

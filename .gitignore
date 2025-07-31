@@ -193,3 +193,4 @@ cython_debug/
 .cursorignore
 .cursorindexingignore
 tokens_and_settings.db
+cookies/

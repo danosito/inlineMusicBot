@@ -36,6 +36,7 @@ async def main():
         BotCommand(command="start", description="Начать"),
         BotCommand(command="help", description="Помощь"),
         BotCommand(command="token", description="Добавить токен"),
+        BotCommand(command="cookie", description="Добавить cookies"),
     ])
 
     await dp.start_polling(bot)

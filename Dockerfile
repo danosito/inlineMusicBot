@@ -9,7 +9,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # ─ Python deps ───────────────────────────────────────────────────
 WORKDIR /app
 ENV DB_DIR=/app/db
-RUN mkdir -p ${DB_DIR}
+RUN mkdir -p ${DB_DIR} /app/cookies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
