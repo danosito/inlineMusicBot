@@ -198,6 +198,7 @@ async def on_download(cb: CallbackQuery):
     else:
         await cb.bot.edit_message_text(inline_message_id=cb.inline_message_id, text="Скачиваю UwU…")
         target = dict(inline_message_id=cb.inline_message_id)
+    print(target)
     await download_video(video_id, format, cb)
 
 
