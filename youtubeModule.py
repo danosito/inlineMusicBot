@@ -202,4 +202,4 @@ async def on_download(cb: CallbackQuery):
     await download_video(video_id, format, cb)
 
 
-router.callback_query.register(on_download, F.data.startswith("ym_dl:"))
+router.callback_query.register(on_download, F.data.startswith("yt_dl:"))
