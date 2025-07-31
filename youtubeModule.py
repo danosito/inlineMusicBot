@@ -1,3 +1,4 @@
+import asyncio
 import datetime
 import os
 import re
@@ -26,17 +27,16 @@ class _StatusLogger:
     красным цветом (ANSI 31m).
     """
 
-    def __init__(self, cb: CallbackQuery) -> None:
+    def __init__(self, queue: asyncio.Queue) -> None:
         self._last = None
         self._last_time = datetime.datetime(1970, 1, 1, 0, 0, 0)
-        self._cb = cb
+        self._queue = queue
 
     def _print(self, msg: str) -> None:
         now = datetime.datetime.now()
         if msg != self._last and now - self._last_time > datetime.timedelta(milliseconds=500):
             print(f"\033[31m{msg}\033[0m")
-            cb = self._cb
-            await cb.bot.edit_message_text(inline_message_id=cb.inline_message_id, text=msg)
+            self._queue.put_nowait(msg)
             self._last = msg
             self._last_time = now
 
@@ -119,7 +119,16 @@ async def download_video(url: str, fmt: str, cb: CallbackQuery, vid: str) -> dic
         )
         post, ext, mediatype = [], "mp4", "video"
 
-    logger = _StatusLogger(cb)
+    queue = asyncio.Queue()
+    logger = _StatusLogger(cb, queue)
+
+    async def consume_log_queue():
+        while True:
+            try:
+                msg = await asyncio.wait_for(queue.get(), timeout=5)
+                await cb.bot.edit_message_text(inline_message_id=cb.inline_message_id, text=msg)
+            except asyncio.TimeoutError:
+                break
 
     ydl_opts = {
         "format": dl_format,
@@ -133,13 +142,14 @@ async def download_video(url: str, fmt: str, cb: CallbackQuery, vid: str) -> dic
         "quiet": True,
         "nocheckcertificate": True,
     }
-
+    consumer_task = asyncio.create_task(consume_log_queue())
     cookie_path = f"/app/cookies/{cb.from_user.id}.txt"
     if os.path.exists(cookie_path):
         ydl_opts["cookiefile"] = cookie_path
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         ydl.download([url])
+    await consumer_task
 
     final_path = os.path.join(target_dir, f"{vid}.{ext}")
     return {"type": mediatype, "file": final_path, "id": vid}
