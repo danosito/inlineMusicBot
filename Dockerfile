@@ -3,7 +3,7 @@ FROM python:3.12-slim
 
 # ─ System deps (build + runtime) ─────────────────────────────────
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        build-essential gcc \
+        build-essential gcc ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
 # ─ Python deps ───────────────────────────────────────────────────
