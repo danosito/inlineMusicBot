@@ -172,7 +172,8 @@ async def on_download(cb: CallbackQuery):
                 media=file_id,
                 title=info["title"],
                 performer=info["artists"],
-                caption=info["text"]
+                caption=info["text"],
+                parse_mode="HTML"
             ),
             **target
         )
@@ -195,7 +196,8 @@ async def on_download(cb: CallbackQuery):
     file_id = sent.audio.file_id
     await cb.bot.edit_message_media(
         media=InputMediaAudio(media=file_id, title=info["title"], performer=info["artists"],
-                              caption=info["text"]),
+                              caption=info["text"],
+                              parse_mode="HTML"),
         **target
     )
     await cache_file_set_ym(track_id, file_id)
