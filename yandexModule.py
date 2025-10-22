@@ -191,11 +191,11 @@ async def on_download(cb: CallbackQuery):
         audio=FSInputFile(path),
         title=info["title"],
         performer=info["artists"],
-        caption=info["text"]
     )
     file_id = sent.audio.file_id
     await cb.bot.edit_message_media(
-        media=InputMediaAudio(media=file_id, title=info["title"], performer=info["artists"]),
+        media=InputMediaAudio(media=file_id, title=info["title"], performer=info["artists"],
+                              caption=info["text"]),
         **target
     )
     await cache_file_set_ym(track_id, file_id)
