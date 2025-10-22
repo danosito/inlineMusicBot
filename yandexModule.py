@@ -313,7 +313,7 @@ async def on_caption_page(cb: CallbackQuery):
     except (ValueError, AttributeError):
         await cb.answer()
         return
-    token = await fetch_ym_token(cb.from_user.id)
+    token = await fetch_ym_token(cb.message.from_user.id)
     if not token:
         await cb.answer("Нужен токен")
         return
