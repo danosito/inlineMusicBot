@@ -37,7 +37,8 @@ def _download_track(token: str, track_id: str, dest: str) -> str:
     track.download(dest)
     info = {
         "title": track.title,
-        "artists": ", ".join(a.name for a in track.artists)
+        "artists": ", ".join(a.name for a in track.artists),
+        "text": track.get_lyrics()
     }
     return json.dumps(info)
 
@@ -171,6 +172,7 @@ async def on_download(cb: CallbackQuery):
                 media=file_id,
                 title=info["title"],
                 performer=info["artists"],
+                caption=info["text"]
             ),
             **target
         )
@@ -189,6 +191,7 @@ async def on_download(cb: CallbackQuery):
         audio=FSInputFile(path),
         title=info["title"],
         performer=info["artists"],
+        caption=info["text"]
     )
     file_id = sent.audio.file_id
     await cb.bot.edit_message_media(
