@@ -3,6 +3,7 @@ import re
 import uuid
 import asyncio
 import json
+import html
 from typing import Optional, List
 
 from aiogram import Router, F
@@ -19,6 +20,9 @@ router = Router()
 
 TRACK_ID_RE = re.compile(r"(?:/track/)(\d+)")
 TOKEN_RE = re.compile(r"^y0[-_0-9A-Za-z]+$")
+CAPTION_LIMIT = 1024
+CAPTION_OPEN_TAG = "<blockquote expandable>"
+CAPTION_CLOSE_TAG = "</blockquote>"
 
 
 def parse_track_id(text: str) -> Optional[str]:
@@ -30,16 +34,96 @@ def parse_track_id(text: str) -> Optional[str]:
     return None
 
 
+def _build_caption_pages(raw_lyrics: str) -> List[str]:
+    cleaned = raw_lyrics.strip()
+    if not cleaned:
+        return []
+    max_payload = CAPTION_LIMIT - len(CAPTION_OPEN_TAG) - len(CAPTION_CLOSE_TAG)
+    if max_payload <= 0:
+        return []
+    pages: List[str] = []
+    current_parts: List[str] = []
+    current_len = 0
+    last_break: Optional[tuple[int, int]] = None
+    for char in cleaned:
+        escaped_char = html.escape(char)
+        escaped_len = len(escaped_char)
+        if current_len + escaped_len > max_payload and current_parts:
+            if last_break:
+                break_idx, break_len = last_break
+                chunk = "".join(current_parts[:break_idx])
+                pages.append(f"{CAPTION_OPEN_TAG}{chunk}{CAPTION_CLOSE_TAG}")
+                current_parts = current_parts[break_idx:]
+                current_len -= break_len
+            else:
+                pages.append(f"{CAPTION_OPEN_TAG}{''.join(current_parts)}{CAPTION_CLOSE_TAG}")
+                current_parts = []
+                current_len = 0
+            last_break = None
+        current_parts.append(escaped_char)
+        current_len += escaped_len
+        if char in ("\n", " "):
+            last_break = (len(current_parts), current_len)
+    if current_parts:
+        pages.append(f"{CAPTION_OPEN_TAG}{''.join(current_parts)}{CAPTION_CLOSE_TAG}")
+    return pages
+
+
+def _get_caption_pages(info: dict) -> List[str]:
+    pages = info.get("caption_pages")
+    if pages:
+        return pages
+    legacy_text = info.get("text")
+    if legacy_text:
+        return [legacy_text]
+    return []
+
+
+def _build_pagination_keyboard(track_id: str, total_pages: int, current_page: int) -> Optional[InlineKeyboardMarkup]:
+    if total_pages <= 1:
+        return None
+    buttons: List[InlineKeyboardButton] = []
+    if current_page > 0:
+        prev_page = current_page - 1
+        buttons.append(
+            InlineKeyboardButton(
+                text=f"← Страница {prev_page + 1}",
+                callback_data=f"ym_pg:{track_id}:{prev_page}"
+            )
+        )
+    if current_page < total_pages - 1:
+        next_page = current_page + 1
+        buttons.append(
+            InlineKeyboardButton(
+                text=f"Страница {next_page + 1} →",
+                callback_data=f"ym_pg:{track_id}:{next_page}"
+            )
+        )
+    return InlineKeyboardMarkup(inline_keyboard=[buttons])
+
+
 def _download_track(token: str, track_id: str, dest: str) -> str:
     client = Client(token)
     client.init()
     track = client.tracks([track_id])[0]
     track.download(dest)
+    lyrics_text = ""
+    try:
+        lyrics = track.get_lyrics()
+        if lyrics:
+            fetched = lyrics.fetch_lyrics()
+            if fetched:
+                lyrics_text = fetched
+    except Exception:
+        lyrics_text = ""
+    caption_pages = _build_caption_pages(lyrics_text)
     info = {
         "title": track.title,
         "artists": ", ".join(a.name for a in track.artists),
-        "text": "<blockquote expandable>" + track.get_lyrics().fetch_lyrics()[:950] + "</blockquote>"
+        "caption_pages": caption_pages,
     }
+    if caption_pages:
+        info["text"] = caption_pages[0]
     return json.dumps(info)
 
 
@@ -50,7 +134,7 @@ async def download_track(token: str, track_id: str, dest: str) -> dict:
 
 async def get_track_info(token: str, track_id: str) -> dict:
     cached = await cache_get_ym_info(track_id)
-    if cached:
+    if cached and "caption_pages" in cached:
         return cached
     dest = os.path.join("/tmp", f"tmp_{track_id}.mp3")
     info = await download_track(token, track_id, dest)
@@ -161,20 +245,26 @@ async def on_download(cb: CallbackQuery):
     file_id = await cache_file_get_ym(track_id)
     if file_id:
         info = await get_track_info(token, track_id)
+        pages = _get_caption_pages(info)
+        caption = pages[0] if pages else ""
+        reply_markup = _build_pagination_keyboard(track_id, len(pages), 0)
         if cb.message:
             await cb.message.edit_text("Отправляю…")
             target = dict(chat_id=cb.message.chat.id, message_id=cb.message.message_id)
         else:
             await cb.bot.edit_message_text(inline_message_id=cb.inline_message_id, text="Отправляю…")
             target = dict(inline_message_id=cb.inline_message_id)
+        media_kwargs = dict(
+            media=file_id,
+            title=info["title"],
+            performer=info["artists"],
+        )
+        if caption:
+            media_kwargs["caption"] = caption
+            media_kwargs["parse_mode"] = "HTML"
         await cb.bot.edit_message_media(
-            media=InputMediaAudio(
-                media=file_id,
-                title=info["title"],
-                performer=info["artists"],
-                caption=info["text"],
-                parse_mode="HTML"
-            ),
+            media=InputMediaAudio(**media_kwargs),
+            reply_markup=reply_markup,
             **target
         )
         await cb.answer()
@@ -194,15 +284,68 @@ async def on_download(cb: CallbackQuery):
         performer=info["artists"],
     )
     file_id = sent.audio.file_id
+    pages = _get_caption_pages(info)
+    caption = pages[0] if pages else ""
+    reply_markup = _build_pagination_keyboard(track_id, len(pages), 0)
+    media_kwargs = dict(
+        media=file_id,
+        title=info["title"],
+        performer=info["artists"],
+    )
+    if caption:
+        media_kwargs["caption"] = caption
+        media_kwargs["parse_mode"] = "HTML"
     await cb.bot.edit_message_media(
-        media=InputMediaAudio(media=file_id, title=info["title"], performer=info["artists"],
-                              caption=info["text"],
-                              parse_mode="HTML"),
+        media=InputMediaAudio(**media_kwargs),
+        reply_markup=reply_markup,
         **target
     )
     await cache_file_set_ym(track_id, file_id)
+    await cache_set_ym_info(track_id, info)
     await cb.answer()
     os.remove(path)
 
 
+async def on_caption_page(cb: CallbackQuery):
+    try:
+        _, track_id, page_str = cb.data.split(":", 2)
+        page_index = int(page_str)
+    except (ValueError, AttributeError):
+        await cb.answer()
+        return
+    token = await fetch_ym_token(cb.from_user.id)
+    if not token:
+        await cb.answer("Нужен токен")
+        return
+    info = await get_track_info(token, track_id)
+    pages = _get_caption_pages(info)
+    if not pages:
+        await cb.answer("Текст недоступен", show_alert=True)
+        return
+    total_pages = len(pages)
+    if page_index < 0:
+        page_index = 0
+    if page_index >= total_pages:
+        page_index = total_pages - 1
+    caption = pages[page_index]
+    reply_markup = _build_pagination_keyboard(track_id, total_pages, page_index)
+    if cb.message:
+        await cb.bot.edit_message_caption(
+            chat_id=cb.message.chat.id,
+            message_id=cb.message.message_id,
+            caption=caption,
+            parse_mode="HTML",
+            reply_markup=reply_markup
+        )
+    else:
+        await cb.bot.edit_message_caption(
+            inline_message_id=cb.inline_message_id,
+            caption=caption,
+            parse_mode="HTML",
+            reply_markup=reply_markup
+        )
+    await cb.answer(f"Страница {page_index + 1} из {total_pages}")
+
+
 router.callback_query.register(on_download, F.data.startswith("ym_dl:"))
+router.callback_query.register(on_caption_page, F.data.startswith("ym_pg:"))
