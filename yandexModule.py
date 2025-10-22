@@ -38,7 +38,7 @@ def _download_track(token: str, track_id: str, dest: str) -> str:
     info = {
         "title": track.title,
         "artists": ", ".join(a.name for a in track.artists),
-        "text": "<blockquote expandable>" + track.get_lyrics().fetch_lyrics()[:1950] + "</blockquote>"
+        "text": "<blockquote expandable>" + track.get_lyrics().fetch_lyrics()[:950] + "</blockquote>"
     }
     return json.dumps(info)
 
