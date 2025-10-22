@@ -4,7 +4,7 @@ import uuid
 import asyncio
 import json
 import html
-from typing import Optional, List
+from typing import Optional, List, Tuple
 
 from aiogram import Router, F
 from aiogram.types import (
@@ -44,7 +44,7 @@ def _build_caption_pages(raw_lyrics: str) -> List[str]:
     pages: List[str] = []
     current_parts: List[str] = []
     current_len = 0
-    last_break: Optional[tuple[int, int]] = None
+    last_break: Optional[Tuple[int, int]] = None
     for char in cleaned:
         escaped_char = html.escape(char)
         escaped_len = len(escaped_char)
@@ -79,7 +79,7 @@ def _get_caption_pages(info: dict) -> List[str]:
     return []
 
 
-def _build_pagination_keyboard(track_id: str, total_pages: int, current_page: int) -> Optional[InlineKeyboardMarkup]:
+def _build_pagination_keyboard(track_id: str, total_pages: int, current_page: int, owner_id: int) -> Optional[InlineKeyboardMarkup]:
     if total_pages <= 1:
         return None
     buttons: List[InlineKeyboardButton] = []
@@ -88,7 +88,7 @@ def _build_pagination_keyboard(track_id: str, total_pages: int, current_page: in
         buttons.append(
             InlineKeyboardButton(
                 text=f"← Страница {prev_page + 1}",
-                callback_data=f"ym_pg:{track_id}:{prev_page}"
+                callback_data=f"ym_pg:{track_id}:{owner_id}:{prev_page}"
             )
         )
     if current_page < total_pages - 1:
@@ -96,7 +96,7 @@ def _build_pagination_keyboard(track_id: str, total_pages: int, current_page: in
         buttons.append(
             InlineKeyboardButton(
                 text=f"Страница {next_page + 1} →",
-                callback_data=f"ym_pg:{track_id}:{next_page}"
+                callback_data=f"ym_pg:{track_id}:{owner_id}:{next_page}"
             )
         )
     return InlineKeyboardMarkup(inline_keyboard=[buttons])
@@ -132,10 +132,12 @@ async def download_track(token: str, track_id: str, dest: str) -> dict:
     return json.loads(info_json)
 
 
-async def get_track_info(token: str, track_id: str) -> dict:
+async def get_track_info(token: Optional[str], track_id: str) -> dict:
     cached = await cache_get_ym_info(track_id)
     if cached and "caption_pages" in cached:
         return cached
+    if not token:
+        raise RuntimeError("Token required to fetch track info")
     dest = os.path.join("/tmp", f"tmp_{track_id}.mp3")
     info = await download_track(token, track_id, dest)
     os.remove(dest)
@@ -247,7 +249,7 @@ async def on_download(cb: CallbackQuery):
         info = await get_track_info(token, track_id)
         pages = _get_caption_pages(info)
         caption = pages[0] if pages else ""
-        reply_markup = _build_pagination_keyboard(track_id, len(pages), 0)
+        reply_markup = _build_pagination_keyboard(track_id, len(pages), 0, cb.from_user.id)
         if cb.message:
             await cb.message.edit_text("Отправляю…")
             target = dict(chat_id=cb.message.chat.id, message_id=cb.message.message_id)
@@ -286,7 +288,7 @@ async def on_download(cb: CallbackQuery):
     file_id = sent.audio.file_id
     pages = _get_caption_pages(info)
     caption = pages[0] if pages else ""
-    reply_markup = _build_pagination_keyboard(track_id, len(pages), 0)
+    reply_markup = _build_pagination_keyboard(track_id, len(pages), 0, cb.from_user.id)
     media_kwargs = dict(
         media=file_id,
         title=info["title"],
@@ -308,16 +310,28 @@ async def on_download(cb: CallbackQuery):
 
 async def on_caption_page(cb: CallbackQuery):
     try:
-        _, track_id, page_str = cb.data.split(":", 2)
+        parts = cb.data.split(":")
+        if len(parts) == 4:
+            _, track_id, owner_id_str, page_str = parts
+        elif len(parts) == 3:
+            _, track_id, page_str = parts
+            owner_id_str = str(cb.from_user.id)
+        else:
+            raise ValueError
         page_index = int(page_str)
+        owner_id = int(owner_id_str)
     except (ValueError, AttributeError):
         await cb.answer()
         return
-    token = await fetch_ym_token(cb.message.from_user.id)
-    if not token:
-        await cb.answer("Нужен токен")
-        return
-    info = await get_track_info(token, track_id)
+    token = await fetch_ym_token(owner_id)
+    cached_info = await cache_get_ym_info(track_id)
+    if cached_info and "caption_pages" in cached_info:
+        info = cached_info
+    else:
+        if not token:
+            await cb.answer("Текст недоступен", show_alert=True)
+            return
+        info = await get_track_info(token, track_id)
     pages = _get_caption_pages(info)
     if not pages:
         await cb.answer("Текст недоступен", show_alert=True)
@@ -328,7 +342,7 @@ async def on_caption_page(cb: CallbackQuery):
     if page_index >= total_pages:
         page_index = total_pages - 1
     caption = pages[page_index]
-    reply_markup = _build_pagination_keyboard(track_id, total_pages, page_index)
+    reply_markup = _build_pagination_keyboard(track_id, total_pages, page_index, owner_id)
     if cb.message:
         await cb.bot.edit_message_caption(
             chat_id=cb.message.chat.id,
