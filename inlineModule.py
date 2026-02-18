@@ -17,7 +17,7 @@ router = Router()
 async def handle_inline(query: InlineQuery):
     text = query.query.strip()
     if text.startswith("https://"):
-        if "yandex.ru" in text:
+        if "yandex.ru" in text or "yandex.com" in text:
             track_id = ym.parse_track_id(text)
             if track_id:
                 await ym.answer_download(query, track_id)
